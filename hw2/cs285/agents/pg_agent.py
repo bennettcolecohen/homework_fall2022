@@ -70,6 +70,13 @@ class PGAgent(BaseAgent):
         
         # Case 1: Trajectory-based Policy Gradient 
         # Estimate Q^{pi}(s_t, a_t) by the total discounted reward summed over entire trajectory
+        # Case 1: trajectory-based PG
+        # Estimate Q^{pi}(s_t, a_t) by the total discounted reward summed over entire trajectory
+
+        # Note: q_values should first be a 2D list where the first dimension corresponds to 
+        # trajectories and the second corresponds to timesteps, 
+        # then flattened to a 1D numpy array.
+
         if not self.reward_to_go:
             q_values = [self._discounted_return(reward) for reward in rewards_list]
             q_values = np.concatenate(q_values)      
