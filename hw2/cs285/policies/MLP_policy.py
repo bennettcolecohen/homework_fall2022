@@ -85,9 +85,16 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
     ##################################
 
     # query the policy with observation(s) to get selected action(s)
-    def get_action(self, obs: np.ndarray) -> np.ndarray:
-        # TODO: get this from HW1
+    def get_action(self, obs):
+        obs_t = torch.Tensor(obs).to(ptu.device)
+        output_dist = self(obs_t)
+        if self.discrete: 
+            sampled_action = output_dist.sample().detach().cpu().numpy()
+        else: 
+            sampled_action = output_dist.rsample().detach().cpu().numpy()[0]
 
+        return sampled_action
+    
     # update/train this policy
     def update(self, observations, actions, **kwargs):
         raise NotImplementedError
@@ -100,7 +107,7 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
     def forward(self, observation: torch.FloatTensor):
         if self.discrete:
             logits = self.logits_na(observation)
-            action_distribution = distributions.Categorical(logits=logits)
+            action_distribution = distributions.Categorical(logits = logits)
             return action_distribution
         else:
             batch_mean = self.mean_net(observation)
@@ -122,11 +129,8 @@ class MLPPolicyPG(MLPPolicy):
         super().__init__(ac_dim, ob_dim, n_layers, size, **kwargs)
         self.baseline_loss = nn.MSELoss()
 
-    def update(self, observations, actions, advantages, q_values=None):
-        observations = ptu.from_numpy(observations)
-        actions = ptu.from_numpy(actions)
-        advantages = ptu.from_numpy(advantages)
 
+    def update(self, observations, actions, advantages, q_values=None):
         # TODO: update the policy using policy gradient
         # HINT1: Recall that the expression that we want to MAXIMIZE
             # is the expectation over collected trajectories of:
@@ -134,7 +138,21 @@ class MLPPolicyPG(MLPPolicy):
         # HINT2: you will want to use the `log_prob` method on the distribution returned
             # by the `forward` method
 
-        TODO
+        # Get all our values as tensors
+        obs_t = ptu.from_numpy(observations)
+        actions_t = ptu.from_numpy(actions)
+        advantages_t = ptu.from_numpy(advantages)
+
+        # Get the action from policy network
+        dist = self(obs_t)
+        
+        # Calculate the log probs from this distribution
+        log_probs = dist.log_prob(actions_t)
+        
+        # Train 
+        self.optimizer.zero_grad()
+        loss = torch.sum(-log_probs * torch.Tensor(advantages_t).to(ptu.device))
+        loss.backward()
 
         if self.nn_baseline:
             ## TODO: update the neural network baseline using the q_values as
@@ -142,9 +160,23 @@ class MLPPolicyPG(MLPPolicy):
             ## of zero and a standard deviation of one.
 
             ## Note: You will need to convert the targets into a tensor using
-                ## ptu.from_numpy before using it in the loss
+            ## ptu.from_numpy before using it in the loss
 
-            TODO
+            # Generate Targets
+            q_values_normalized = ( q_values - q_values.mean() ) / q_values.std()
+            target_b = ptu.from_numpy(q_values_normalized)
+
+            # Prediction 
+            pred_b = self.baseline(obs_t).to(ptu.device).view(-1)
+          
+            # MSE Loss for baseline 
+            loss_b = nn.functional.mse_loss(pred_b, target_b)
+            loss_b.backward()
+
+        # Make sure to actually step the optimizer
+        self.optimizer.step()
+            
+
 
         train_log = {
             'Training Loss': ptu.to_numpy(loss),
