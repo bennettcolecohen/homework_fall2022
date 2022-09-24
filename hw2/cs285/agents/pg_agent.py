@@ -132,11 +132,7 @@ class PGAgent(BaseAgent):
                 advantages = advantages[:-1]
 
             else:
-                obs_t = ptu.from_numpy(obs)
-                ## TODO: compute advantage estimates using q_values, and values as baselines
-                b = self.actor.baseline(obs_t).to(ptu.device)
-                b_unnormalized = ptu.to_numpy(b) * np.std(q_values) + np.mean(q_values)
-                advantages = q_values - b_unnormalized
+                advantages = q_values - values
 
         # Else, just set the advantage to [Q]
         else:
