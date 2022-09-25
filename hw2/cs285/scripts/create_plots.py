@@ -81,22 +81,22 @@ def plot_tb(list_of_data, list_of_labels, title, output_file):
 
 
 # Cartpole -- Small
-cartpole_sb_data = get_tb_returns(list_of_path_patterns = ['sb_no_rtg_dsa', 'sb_rtg_dsa', 'sb_rtg_na'])
-plot_tb(
-    cartpole_sb_data, 
-    ['no_rtg_dsa', 'rtg_dsa', 'rtg_na'], 
-    title = 'Cartpole Small Batch Returns', 
-    output_file = 'cartpole_sb_returns.png'
-)
+# cartpole_sb_data = get_tb_returns(list_of_path_patterns = ['sb_no_rtg_dsa', 'sb_rtg_dsa', 'sb_rtg_na'])
+# plot_tb(
+#     cartpole_sb_data, 
+#     ['no_rtg_dsa', 'rtg_dsa', 'rtg_na'], 
+#     title = 'Cartpole Small Batch Returns', 
+#     output_file = 'cartpole_sb_returns.png'
+# )
 
-# Cartpole -- Large
-cartpole_lb_data = get_tb_returns(list_of_path_patterns = ['lb_no_rtg_dsa', 'lb_rtg_dsa', 'lb_rtg_na'])
-plot_tb(
-    cartpole_lb_data, 
-    ['no_rtg_dsa', 'rtg_dsa', 'rtg_na'], 
-    title = 'Cartpole Large Batch Returns', 
-    output_file = 'cartpole_lb_returns.png'
-)
+# # Cartpole -- Large
+# cartpole_lb_data = get_tb_returns(list_of_path_patterns = ['lb_no_rtg_dsa', 'lb_rtg_dsa', 'lb_rtg_na'])
+# plot_tb(
+#     cartpole_lb_data, 
+#     ['no_rtg_dsa', 'rtg_dsa', 'rtg_na'], 
+#     title = 'Cartpole Large Batch Returns', 
+#     output_file = 'cartpole_lb_returns.png'
+# )
 
 # Lunar Lander 
 lander_data = get_tb_returns(list_of_path_patterns = ['q3'])
