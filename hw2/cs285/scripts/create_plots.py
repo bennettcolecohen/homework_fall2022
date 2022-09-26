@@ -77,6 +77,7 @@ def plot_tb(list_of_data, list_of_labels, title, output_file):
     plt.xlabel('Iteration')
     plt.ylabel('Average Return')
     plt.legend(); 
+    # plt.ylim(-50, 600)
     fig.savefig(output_file)
 
 
@@ -98,10 +99,72 @@ def plot_tb(list_of_data, list_of_labels, title, output_file):
 #     output_file = 'cartpole_lb_returns.png'
 # )
 
-# Lunar Lander 
-lander_data = get_tb_returns(list_of_path_patterns = ['q3'])
+# # Lunar Lander 
+# lander_data = get_tb_returns(list_of_path_patterns = ['q3'])
+# plot_tb(
+#     list_of_data = lander_data, 
+#     list_of_labels = ['Lunar Lander'], 
+#     title = 'Lunar Lander Baseline Returns',
+#     output_file = 'lunar_lander_baseline_returns.png')
+
+# pendulum_data_all = get_tb_returns(list_of_path_patterns=[
+#     'q2_pg_q2_b500_r1e-2', 'q2_pg_q2_b500_r2e-3', 'q2_pg_q2_b500_r5e-3', 
+#     'q2_pg_q2_b1000_r1e-2', 'q2_pg_q2_b1000_r2e-3', 'q2_pg_q2_b1000_r5e-3', 
+#     'q2_pg_q2_b5000_r1e-2', 'q2_pg_q2_b5000_r2e-3', 'q2_pg_q2_b5000_r5e-3'
+# ])
+# plot_tb(
+#     list_of_data = pendulum_data_all, 
+#     list_of_labels = ['b500_r1e-2', 'b500_r2e-3', 'b500_r5e-3', 
+#                     'b1000_r1e-2', 'b1000_r2e-3', 'b1000_r5e-3', 
+#                     'b5000_r1e-2', 'b5000_r2e-3', 'b5000_r5e-3'], 
+#     title = 'Inverted Pendulum All Search Returns',
+#     output_file = 'inverted_pendulum_all.png')
+
+# pendulum_best = get_tb_returns(list_of_path_patterns=['q2_pg_q2_b500_r1e-2'])
+# plot_tb(
+#     list_of_data = pendulum_best, 
+#     list_of_labels = ['b500_r1e-2'], 
+#     title = 'Inverted Pendulum Best Returns',
+#     output_file = 'inverted_pendulum_best.png')
+
+hopper_data = get_tb_returns(
+    list_of_path_patterns=[
+        'q2_pg_q5_b2000_r0.001_lambda0.0_run2',
+        'q2_pg_q5_b2000_r0.001_lambda0.95_run2', 
+        'q2_pg_q5_b2000_r0.001_lambda0.98_run2', 
+        'q2_pg_q5_b2000_r0.001_lambda0.99_run2', 
+        'q2_pg_q5_b2000_r0.001_lambda1.0_run2' ])
 plot_tb(
-    list_of_data = lander_data, 
-    list_of_labels = ['Lunar Lander'], 
-    title = 'Lunar Lander Baseline Returns',
-    output_file = 'lunar_lander_baseline_returns.png')
+    list_of_data = hopper_data, 
+    list_of_labels = ['Lambda = 0.0', 'Lambda = 0.95', 'Lambda = 0.98', 'Lambda = 0.99', 'Lambda = 1'], 
+    title = 'GAE Hopper-v4 Returns',
+    output_file = 'gae_hopper.png')
+
+
+# cheetah_data = get_tb_returns(
+#     list_of_path_patterns = [
+#         'q2_pg_q4_search_b10000_lr0.005', #'q2_pg_q4_search_b10000_lr0.01', 'q2_pg_q4_search_b10000_lr0.005', 
+#         'q2_pg_q4_search_b30000_lr0.005', #'q2_pg_q4_search_b30000_lr0.01', 'q2_pg_q4_search_b30000_lr0.005', 
+#         'q2_pg_q4_search_b50000_lr0.005'], #'q2_pg_q4_search_b50000_lr0.01', 'q2_pg_q4_search_b50000_lr0.005']
+# )
+# plot_tb(
+#     list_of_data = cheetah_data, 
+#     list_of_labels = [
+# 'b10000_lr0.005'#, 'b10000_lr0.01', 'b10000_lr0.005', 
+#         'b30000_lr0.005'#, 'b30000_lr0.01', 'b30000_lr0.005', 
+#         'b50000_lr0.005'],#, 'b50000_lr0.01', 'b50000_lr0.005'], 
+#     title = 'Half Cheetah Search Returns',
+#     output_file = 'half_cheetah_search_0.005.png')
+
+# cheetah_data = get_tb_returns(
+#     list_of_path_patterns=[
+#         'q2_pg_q4_b50000_r0.02_rtg_nnbaseline_HalfCheetah-v4', 'q2_pg_q4_b50000_r0.02_nnbaseline_HalfCheetah-v4', 
+#         'q2_pg_q4_b50000_r_0.02_rtg_HalfCheetah-v4', 'q2_pg_q4_b50000_r0.02_HalfCheetah'
+#     ]
+# )
+# plot_tb(
+#     list_of_data = cheetah_data, 
+#     list_of_labels = ['rtg_nnbaseline', 'nnbaseline', 'rtg', 'neither'], 
+#     title = 'Half Cheetah Returns for b = 50,000; lr = 0.02', 
+#     output_file = 'half_cheetah_best.png'
+# )
