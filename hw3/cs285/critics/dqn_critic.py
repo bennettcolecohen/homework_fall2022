@@ -44,7 +44,6 @@ class DQNCritic(BaseCritic):
 
 
     def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
-        print('ob shape immediately after calling self.critic.update but before doing anything', ob_no.shape) 
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from
@@ -66,9 +65,6 @@ class DQNCritic(BaseCritic):
         next_ob_no = ptu.from_numpy(next_ob_no)
         reward_n = ptu.from_numpy(reward_n)
         terminal_n = ptu.from_numpy(terminal_n)
-
-        print('ob shape after converting to torch', ob_no.shape)
-
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
         
@@ -85,14 +81,15 @@ class DQNCritic(BaseCritic):
             # q_tp1 = self.q_net(next_ob_no).argmax(-1, True)
             pass
         else:
-            q_tp1, _ = qa_tp1_values.max(dim=1)
+            q_tp1, _ = qa_tp1_values.max(dim = 1)
 
         # TODO compute targets for minimizing Bellman error
         # HINT: as you saw in lecture, this would be:
             #currentReward + self.gamma * qValuesOfNextTimestep * (not terminal)
-        curr_Q = self.q_net(ob_no).gather(-1, ac_na.long().view(-1, 1)).squeeze()
-        best_next_Q = self.q_net_target(next_ob_no).gather(-1, q_tp1).squeeze()
-        target = reward_n + (self.gamma * best_next_Q * (1 - terminal_n))
+            
+        current_Q_val = self.q_net(ob_no).gather(-1, ac_na.long().view(-1, 1)).squeeze()
+        best_next_step_Q_val = self.q_net_target(next_ob_no).gather(-1, q_tp1).squeeze()
+        target = reward_n + (self.gamma * best_next_step_Q_val * (1 - terminal_n))
         target = target.detach()
 
         assert q_t_values.shape == target.shape
