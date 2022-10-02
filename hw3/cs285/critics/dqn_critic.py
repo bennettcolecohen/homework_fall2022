@@ -14,6 +14,8 @@ class DQNCritic(BaseCritic):
         self.env_name = hparams['env_name']
         self.ob_dim = hparams['ob_dim']
 
+
+
         if isinstance(self.ob_dim, int):
             self.input_shape = (self.ob_dim,)
         else:
@@ -40,7 +42,9 @@ class DQNCritic(BaseCritic):
         self.q_net.to(ptu.device)
         self.q_net_target.to(ptu.device)
 
+
     def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
+        print('ob shape immediately after calling self.critic.update but before doing anything', ob_no.shape) 
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from
@@ -56,32 +60,39 @@ class DQNCritic(BaseCritic):
             returns:
                 nothing
         """
+
         ob_no = ptu.from_numpy(ob_no)
         ac_na = ptu.from_numpy(ac_na).to(torch.long)
         next_ob_no = ptu.from_numpy(next_ob_no)
         reward_n = ptu.from_numpy(reward_n)
         terminal_n = ptu.from_numpy(terminal_n)
 
+        print('ob shape after converting to torch', ob_no.shape)
+
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
         
         # TODO compute the Q-values from the target network 
-        qa_tp1_values = TODO
-
+        qa_tp1_values = self.q_net_target(next_ob_no)
+        
         if self.double_q:
             # You must fill this part for Q2 of the Q-learning portion of the homework.
             # In double Q-learning, the best action is selected using the Q-network that
             # is being updated, but the Q-value for this action is obtained from the
             # target Q-network. Please review Lecture 8 for more details,
             # and page 4 of https://arxiv.org/pdf/1509.06461.pdf is also a good reference.
-            TODO
+            
+            # q_tp1 = self.q_net(next_ob_no).argmax(-1, True)
+            pass
         else:
             q_tp1, _ = qa_tp1_values.max(dim=1)
 
         # TODO compute targets for minimizing Bellman error
         # HINT: as you saw in lecture, this would be:
             #currentReward + self.gamma * qValuesOfNextTimestep * (not terminal)
-        target = TODO
+        curr_Q = self.q_net(ob_no).gather(-1, ac_na.long().view(-1, 1)).squeeze()
+        best_next_Q = self.q_net_target(next_ob_no).gather(-1, q_tp1).squeeze()
+        target = reward_n + (self.gamma * best_next_Q * (1 - terminal_n))
         target = target.detach()
 
         assert q_t_values.shape == target.shape
