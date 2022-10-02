@@ -42,8 +42,12 @@ class DQNCritic(BaseCritic):
         self.q_net.to(ptu.device)
         self.q_net_target.to(ptu.device)
 
-
     def update(self, ob_no, ac_na, next_ob_no, reward_n, terminal_n):
+
+        # print('ob_no dim 1st line of update', ob_no.shape)
+        # print('next_ob_no 1st line of update', ptu.from_numpy(next_ob_no).shape)
+
+
         """
             Update the parameters of the critic.
             let sum_of_path_lengths be the sum of the lengths of the paths sampled from
@@ -65,11 +69,12 @@ class DQNCritic(BaseCritic):
         next_ob_no = ptu.from_numpy(next_ob_no)
         reward_n = ptu.from_numpy(reward_n)
         terminal_n = ptu.from_numpy(terminal_n)
+
         qa_t_values = self.q_net(ob_no)
         q_t_values = torch.gather(qa_t_values, 1, ac_na.unsqueeze(1)).squeeze(1)
         
         # TODO compute the Q-values from the target network 
-        qa_tp1_values = self.q_net_target(next_ob_no)
+        qa_tp1_values = self.q_net_target(next_ob_no) 
         
         if self.double_q:
             # You must fill this part for Q2 of the Q-learning portion of the homework.
@@ -87,8 +92,8 @@ class DQNCritic(BaseCritic):
         # HINT: as you saw in lecture, this would be:
             #currentReward + self.gamma * qValuesOfNextTimestep * (not terminal)
             
-        current_Q_val = self.q_net(ob_no).gather(-1, ac_na.long().view(-1, 1)).squeeze()
-        best_next_step_Q_val = self.q_net_target(next_ob_no).gather(-1, q_tp1).squeeze()
+        current_Q_val = qa_t_values.gather(-1, ac_na.long().view(-1, 1)).squeeze()
+        best_next_step_Q_val = qa_tp1_values.gather(-1, ac_na.long().view(-1, 1)).squeeze() # ehhh not sure if tis is right
         target = reward_n + (self.gamma * best_next_step_Q_val * (1 - terminal_n))
         target = target.detach()
 

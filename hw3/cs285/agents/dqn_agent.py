@@ -90,6 +90,7 @@ class DQNAgent(object):
             return [],[],[],[],[]
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
+    
         log = {}
         if (self.t > self.learning_starts
                 and self.t % self.learning_freq == 0
@@ -97,13 +98,13 @@ class DQNAgent(object):
         ):
 
             # TODO fill in the call to the update function using the appropriate tensors
-            log = self.critic.update(ob_no, ac_na, re_n, next_ob_no, terminal_n)
+            log = self.critic.update(ob_no, ac_na, next_ob_no, re_n, terminal_n)
 
             # TODO update the target network periodically 
             # HINT: your critic already has this functionality implemented
             if self.num_param_updates % self.target_update_freq == 0:
-                # self.critic.q_net_target.load_state_dict(self.critic.q_net.state_dict())
-                self.critic.q_net_target.update_target_network
+                self.critic.q_net_target.load_state_dict(self.critic.q_net.state_dict())
+                # self.critic.q_net_target.update_target_network()
 
             self.num_param_updates += 1
 
