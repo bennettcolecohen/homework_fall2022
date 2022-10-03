@@ -93,8 +93,8 @@ class DQNCritic(BaseCritic):
             #currentReward + self.gamma * qValuesOfNextTimestep * (not terminal)
 
             
-        best_next_step_Q_val = qa_tp1_values.gather(-1, ac_na.unsqueeze(1)).squeeze(1) # ehhh not sure if tis is right
-        target = reward_n + (self.gamma * best_next_step_Q_val * (1 - terminal_n))
+        qValuesOfNextTimestep = qa_tp1_values.gather(-1, ac_na.unsqueeze(1)).squeeze(1) # ehhh not sure if tis is right
+        target = reward_n + (self.gamma * qValuesOfNextTimestep * (1 - terminal_n))
         target = target.detach()
 
         assert q_t_values.shape == target.shape
