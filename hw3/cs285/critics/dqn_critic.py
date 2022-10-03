@@ -91,9 +91,9 @@ class DQNCritic(BaseCritic):
         # TODO compute targets for minimizing Bellman error
         # HINT: as you saw in lecture, this would be:
             #currentReward + self.gamma * qValuesOfNextTimestep * (not terminal)
+
             
-        current_Q_val = qa_t_values.gather(-1, ac_na.long().view(-1, 1)).squeeze()
-        best_next_step_Q_val = qa_tp1_values.gather(-1, ac_na.long().view(-1, 1)).squeeze() # ehhh not sure if tis is right
+        best_next_step_Q_val = qa_tp1_values.gather(-1, ac_na.unsqueeze(1)).squeeze(1) # ehhh not sure if tis is right
         target = reward_n + (self.gamma * best_next_step_Q_val * (1 - terminal_n))
         target = target.detach()
 
