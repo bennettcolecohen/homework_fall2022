@@ -26,6 +26,9 @@ class Q_Trainer(object):
         self.params['agent_params'] = self.agent_params
         self.params['train_batch_size'] = params['batch_size']
         self.params['env_wrappers'] = self.agent_params['env_wrappers']
+        
+        ## pass the exp_sched through
+        self.params['exp_sched'] = self.agent_params['exp_sched']
 
         self.rl_trainer = RL_Trainer(self.params)
 
