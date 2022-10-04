@@ -172,7 +172,7 @@ def lander_exploration_schedule(num_timesteps):
     return PiecewiseSchedule(
         [
             (0, 1),
-            (num_timesteps * 0.1, 0.02),
+            (num_timesteps * 0.1*0.5, 0.02),
         ], outside_value=0.02
     )
 
