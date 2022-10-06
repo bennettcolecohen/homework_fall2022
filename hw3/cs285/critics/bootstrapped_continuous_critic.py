@@ -99,7 +99,7 @@ class BootstrappedContinuousCritic(nn.Module, BaseCritic):
                 V_target = reward_t + (self.gamma * V_next)
             self.optimizer.zero_grad()
             loss = nn.functional.mse_loss(self(obs_t).squeeze().detach(), V_target)
-            loss.backward(retain_graph=Tru)
+            loss.backward()
             self.optimizer.step()
             
         return loss.item()
