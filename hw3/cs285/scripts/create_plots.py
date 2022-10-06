@@ -69,8 +69,10 @@ _, double_dqn_avg2, _ = read_data(f'q2_doubledqn_2')
 _, double_dqn_avg3, _ = read_data(f'q2_doubledqn_3')
 double_dqn_avg = np.mean(np.array([double_dqn_avg1,double_dqn_avg2,double_dqn_avg3]), axis = 0)
 
+goal = np.repeat(150, len(steps[1:]))
+
 plot_data(
     steps[1:], 
-    [dqn_avg, double_dqn_avg],
-    ['Vanilla DQN', 'Double DQN'],
-    'LunarLander-v3 DQN & Double DQN Returns','Steps', 'Returns', True, 'q2.png')
+    [dqn_avg, double_dqn_avg, goal],
+    ['Vanilla DQN', 'Double DQN', 'Target at 350k steps'],
+    'LunarLander-v3 DQN & Double DQN Returns','Steps', 'Returns', True, 'q2_with_target.png')

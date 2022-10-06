@@ -128,4 +128,54 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
 class MLPPolicyAC(MLPPolicy):
     def update(self, observations, actions, adv_n=None):
         # TODO: update the policy and return the loss
+
+        # Grab values as tensors 
+        obs_t = ptu.from_numpy(observations)
+        actions_t = ptu.from_numpy(actions)
+        adv_t = ptu.from_numpy(adv_n)
+
+        # Get action from policy network 
+        dist = self(obs_t)
+        log_probs = dist.log_prob(actions_t)
+
+        # Train 
+        self.optimizer.zero_grad()
+        loss = torch.sum(-log_probs * torch.Tensor(adv_t).to(ptu.device))
+        loss.backward()
+        self.optimizer.step()
+            
+
         return loss.item()
+
+    # def update(self, observations, actions, advantages, q_values=None):
+    #     # TODO: update the policy using policy gradient
+    #     # HINT1: Recall that the expression that we want to MAXIMIZE
+    #         # is the expectation over collected trajectories of:
+    #         # sum_{t=0}^{T-1} [grad [log pi(a_t|s_t) * (Q_t - b_t)]]
+    #     # HINT2: you will want to use the `log_prob` method on the distribution returned
+    #         # by the `forward` method
+
+    #     # Get all our values as tensors
+    #     obs_t = ptu.from_numpy(observations)
+    #     actions_t = ptu.from_numpy(actions)
+    #     advantages_t = ptu.from_numpy(advantages)
+
+    #     # Get the action from policy network
+    #     dist = self(obs_t)
+        
+    #     # Calculate the log probs from this distribution
+    #     log_probs = dist.log_prob(actions_t)
+        
+    #     # Train 
+    #     self.optimizer.zero_grad()
+    #     loss = torch.sum(-log_probs * torch.Tensor(advantages_t).to(ptu.device))
+    #     loss.backward()
+    #     self.optimizer.step()
+            
+
+
+    #     train_log = {
+    #         'Training Loss': ptu.to_numpy(loss),
+    #     }
+    #     return train_log
+

@@ -1,3 +1,4 @@
+from turtle import done
 from .base_critic import BaseCritic
 from torch import nn
 from torch import optim
@@ -85,5 +86,22 @@ class BootstrappedContinuousCritic(nn.Module, BaseCritic):
         #       to 0) when a terminal state is reached
         # HINT: make sure to squeeze the output of the critic_network to ensure
         #       that its dimensions match the reward
+
+        # Convert to tensors 
+        obs_t = ptu.from_numpy(ob_no)
+        next_obs_t = ptu.from_numpy(next_ob_no)
+        reward_t = ptu.from_numpy(reward_n)
+        terminal_t = ptu.from_numpy(terminal_n)
+
+        for i in range(self.num_grad_steps_per_target_update * self.num_target_updates): 
+            if i % self.num_grad_steps_per_target_update == 0: # each ngradsteppertarget
+                V_next = self(next_obs_t).squeeze() * (1 - terminal_t)
+                V_target = reward_t + (self.gamma * V_next)
+            self.optimizer.zero_grad()
+            loss = nn.functional.mse_loss(self(obs_t).squeeze().detach(), V_target)
+            loss.backward()
+            self.optimizer.step()
+            # V_target.detach_()
+            
 
         return loss.item()
