@@ -42,37 +42,38 @@ def plot_data(x, list_of_y, list_of_labels, title, xlabel, ylabel, legend, outpu
 # best_returns = best_returns[:len(steps)]
 # plot_data(steps, [avg_returns, best_returns], ['Avg. Return', 'Best Return'],'MsPacman-v0 DQN Returns', 'Steps', 'Returns', True, 'q1_dqn.png')
 
-#Q2
-# dqn_avg_returns, ddqn_avg_returns = [],[],
-# for i in [1,2,3]: 
-#     dqn_steps, dqn_avg, _ = read_data(f'q2_dqn_{i}')
-#     _, ddqn_avg, _ = read_data(f'q2_doubledqn_{i}')
+# #Q2
+# steps, dqn_avg1, _ = read_data(f'q2_dqn_1')
+# _, dqn_avg2, _ = read_data(f'q2_dqn_2')
+# _, dqn_avg3, _ = read_data(f'q2_dqn_3')
+# dqn_avg = np.mean(np.array([dqn_avg1,dqn_avg2,dqn_avg3]), axis = 0)
 
-#     dqn_avg_returns.append(dqn_avg)
-#     ddqn_avg_returns.append(ddqn_avg)
+# steps, double_dqn_avg1, _ = read_data(f'q2_doubledqn_1')
+# _, double_dqn_avg2, _ = read_data(f'q2_doubledqn_2')
+# _, double_dqn_avg3, _ = read_data(f'q2_doubledqn_3')
+# double_dqn_avg = np.mean(np.array([double_dqn_avg1,double_dqn_avg2,double_dqn_avg3]), axis = 0)
 
-# dqn_avg_avg = np.mean(np.array(dqn_avg_returns), axis = 0)
-# ddqn_avg_avg = np.mean(np.array(dqn_avg_returns), axis = 0)
+# goal = np.repeat(150, len(steps[1:]))
+
+# plot_data(
+#     steps[1:], 
+#     [dqn_avg, double_dqn_avg, goal],
+#     ['Vanilla DQN', 'Double DQN', 'Target at 350k steps'],
+#     'LunarLander-v3 DQN & Double DQN Returns','Steps', 'Returns', True, 'q2_with_target.png')
 
 
-# plot_data(dqn_steps[1:], [dqn_avg_avg, ddqn_avg_avg], 
-# ['DQN Avg.', 'Double DQN Avg.'],
-# 'LunarLander-v3 DQN & Double DQN Returns', 'Steps', 'Returns', True, 'q2.png')
-
-steps, dqn_avg1, _ = read_data(f'q2_dqn_1')
-_, dqn_avg2, _ = read_data(f'q2_dqn_2')
-_, dqn_avg3, _ = read_data(f'q2_dqn_3')
-dqn_avg = np.mean(np.array([dqn_avg1,dqn_avg2,dqn_avg3]), axis = 0)
-
-steps, double_dqn_avg1, _ = read_data(f'q2_doubledqn_1')
-_, double_dqn_avg2, _ = read_data(f'q2_doubledqn_2')
-_, double_dqn_avg3, _ = read_data(f'q2_doubledqn_3')
-double_dqn_avg = np.mean(np.array([double_dqn_avg1,double_dqn_avg2,double_dqn_avg3]), axis = 0)
-
-goal = np.repeat(150, len(steps[1:]))
+#Q4
+steps, ac1, _ = read_data(f'q4_ac_1_1_CartPole-v0')
+_, ac2, _ = read_data(f'q4_100_1_CartPole-v0')
+_, ac3, _ = read_data(f'q4_1_100_CartPole-v0')
+_, ac4, _ = read_data(f'q4_10_10_CartPole-v0')
 
 plot_data(
-    steps[1:], 
-    [dqn_avg, double_dqn_avg, goal],
-    ['Vanilla DQN', 'Double DQN', 'Target at 350k steps'],
-    'LunarLander-v3 DQN & Double DQN Returns','Steps', 'Returns', True, 'q2_with_target.png')
+    steps[:], 
+    [ac1,ac2,ac3,ac4], 
+    ['q4_1_1', 'q4_100_1', 'q4_1_100', 'q4_10_10'],
+     'Cartpole-V0 Actor-Critic', 
+     'Steps',
+     'Returns', 
+     True, 
+     'q4_actor_critic.png')
