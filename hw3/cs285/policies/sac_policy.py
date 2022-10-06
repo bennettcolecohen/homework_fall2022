@@ -36,12 +36,30 @@ class MLPPolicySAC(MLPPolicy):
     @property
     def alpha(self):
         # TODO: Formulate entropy term
+        entropy = torch.exp(self.log_alpha)
         return entropy
 
     def get_action(self, obs: np.ndarray, sample=True) -> np.ndarray:
         # TODO: return sample from distribution if sampling
         # if not sampling return the mean of the distribution 
-        return action
+        if len(obs.shape) > 1: 
+            obs_n = obs
+        else: 
+            obs_n = obs[None]
+
+        obs_t = ptu.from_numpy(obs_n)
+
+        # Get action dist
+        if sample: 
+            dist = self.forward(obs_t, sample = True)
+            action_t = dist.rsample()
+
+        else: 
+            action_t = dist.mean()
+
+        action_log_p = dist.log_prob(action_t).sum(dim = 1, keepdim = True)
+
+        return action_t, action_log_p
 
     # This function defines the forward pass of the network.
     # You can return anything you want, but you should be able to differentiate
@@ -54,10 +72,42 @@ class MLPPolicySAC(MLPPolicy):
         # HINT: 
         # You will need to clip log values
         # You will need SquashedNormal from sac_utils file 
+
+        mean_val = self.mean_net(observation)
+        log_std_tanh = self.logstd.tanh()
+        clipped_log_std = self.log_std_bounds[0] + (self.log_std_bounds[1] - self.log_std_bounds[0]) * (log_std_tanh + 1) / 2
+        std_val = clipped_log_std.exp()
+
+        # now lets use the squashed normal 
+        action_distribution = sac_utils.SquashedNormal(mean_val, std_val)
+
         return action_distribution
 
     def update(self, obs, critic):
         # TODO Update actor network and entropy regularizer
         # return losses and alpha value
+
+        obs_t = ptu.from_numpy(obs)
+        
+        #call forward to get te action
+        action_t, action_log_p = self.get_action(obs_t, sample = True)
+        qval1, qval2 = critic.forward(obs_t, action_t)
+        min_qval = torch.min(qval1, qval2)
+        
+        # Calculate Actor Loss 
+        actor_loss = (self.alpha.detach() * action_log_p - min_qval).mean()
+
+        # Step
+        self.optimizer.zero_grad()
+        actor_loss.backward()
+        self.optimizer.step()
+
+        # Alpha Loss 
+        alpha_loss = (self.alpha * (-1*action_log_p - self.target_entropy).detach()).mean()
+
+        # Step Alpha Loss
+        self.log_alpha_optimizer.zero_grad()
+        alpha_loss.backward()
+        self.log_alpha_optimizer.step()
 
         return actor_loss, alpha_loss, self.alpha

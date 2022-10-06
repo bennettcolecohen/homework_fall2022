@@ -10,6 +10,7 @@ import gym
 from cs285.policies.sac_policy import MLPPolicySAC
 from cs285.critics.sac_critic import SACCritic
 import cs285.infrastructure.pytorch_util as ptu
+import torch
 
 class SACAgent(BaseAgent):
     def __init__(self, env: gym.Env, agent_params):
@@ -51,7 +52,28 @@ class SACAgent(BaseAgent):
         # HINT: You need to use the entropy term (alpha)
         # 2. Get current Q estimates and calculate critic loss
         # 3. Optimize the critic  
-        return critic_loss
+
+        obs_t = ptu.from_numpy(ob_no)
+        ac_t = ptu.from_numpy(ac_na)
+        next_obs_t = ptu.from_numpy(next_ob_no)
+        re_t = ptu.from_numpy(re_n)
+        terminal_t = ptu.from_numpy(terminal_n)
+
+        
+        next_ac_na, next_ac_log_p = self.actor.forward(next_obs_t, sample = True)
+        next_q1, next_q2 = self.critic_target.forward(next_obs_t, next_ac_na)
+        next_s = torch.min(next_q1, next_q2) - self.actor.alpha.detach() * next_ac_log_p
+        target_q = (re_t + (self.gamma * (1-terminal_t) * next_s)).detach()
+
+        q1_curr, q2_curr = self.critic.forward(obs_t, ac_t)
+        q1_loss, q2_loss = self.critic.loss(q1_curr, target_q), self.critic.loss(q2_curr, target_q)
+        critic_loss = q1_loss + q2_loss
+
+        self.critic.optimizer.zero_grad()
+        critic_loss.backward()
+        self.critic.optimizer.step()
+
+        return critic_loss.item()
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
         # TODO 

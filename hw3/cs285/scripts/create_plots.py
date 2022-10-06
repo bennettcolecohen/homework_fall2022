@@ -63,17 +63,27 @@ def plot_data(x, list_of_y, list_of_labels, title, xlabel, ylabel, legend, outpu
 
 
 #Q4
-steps, ac1, _ = read_data(f'q4_ac_1_1_CartPole-v0')
-_, ac2, _ = read_data(f'q4_100_1_CartPole-v0')
-_, ac3, _ = read_data(f'q4_1_100_CartPole-v0')
-_, ac4, _ = read_data(f'q4_10_10_CartPole-v0')
+# steps, ac1, _ = read_data(f'q4_ac_1_1_CartPole-v0')
+# _, ac2, _ = read_data(f'q4_100_1_CartPole-v0')
+# _, ac3, _ = read_data(f'q4_1_100_CartPole-v0')
+# _, ac4, _ = read_data(f'q4_10_10_CartPole-v0')
 
-plot_data(
-    steps[:], 
-    [ac1,ac2,ac3,ac4], 
-    ['q4_1_1', 'q4_100_1', 'q4_1_100', 'q4_10_10'],
-     'Cartpole-V0 Actor-Critic', 
-     'Steps',
-     'Returns', 
-     True, 
-     'q4_actor_critic.png')
+# plot_data(
+#     steps[:], 
+#     [ac1,ac2,ac3,ac4], 
+#     ['q4_1_1', 'q4_100_1', 'q4_1_100', 'q4_10_10'],
+#      'Cartpole-V0 Actor-Critic', 
+#      'Steps',
+#      'Returns', 
+#      True, 
+#      'q4_actor_critic.png')
+
+#Q5 - Pendulumn 
+steps, pend_data, _ = read_data('q5_1_100_InvertedPendulum-v4')
+plot_data(np.arange(100, step = 10), [pend_data], ['NTU=1, NGSPTU=100'], 'InvertedPendulum Actor-Critic', 
+'Iterations', 'Return', True, 'q5_pendulum_iters.png')
+
+#Q5 - Cheetah 
+steps, cheetah_data, _ = read_data('q5_1_100_HalfCheetah-v4')
+plot_data(np.arange(len(cheetah_data)), [cheetah_data], ['NTU=1, NGSPTU=100'], 'HalfCheetah Actor-Critic', 
+'Iterations', 'Return', True, 'q5_cheetah_iters.png')
