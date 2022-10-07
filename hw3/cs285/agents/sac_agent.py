@@ -3,6 +3,7 @@ from collections import OrderedDict
 from cs285.critics.bootstrapped_continuous_critic import \
     BootstrappedContinuousCritic
 from cs285.infrastructure.replay_buffer import ReplayBuffer
+from cs285.infrastructure.sac_utils import soft_update_params
 from cs285.infrastructure.utils import *
 from cs285.policies.MLP_policy import MLPPolicyAC
 from .base_agent import BaseAgent
@@ -53,26 +54,35 @@ class SACAgent(BaseAgent):
         # 2. Get current Q estimates and calculate critic loss
         # 3. Optimize the critic  
 
+        # Grab everything as a tensor
         obs_t = ptu.from_numpy(ob_no)
         ac_t = ptu.from_numpy(ac_na)
         next_obs_t = ptu.from_numpy(next_ob_no)
         re_t = ptu.from_numpy(re_n)
         terminal_t = ptu.from_numpy(terminal_n)
 
+        print('shape of incoming next_ob_no', next_ob_no.shape)
+
+        # Calculate Target Q
+        next_actions_t, next_entropies_t = self.actor.get_action(next_ob_no)
+        next_q1, next_q2 = self.critic_target(next_obs_t, next_actions_t)
+        next_q = torch.min(next_q1, next_q2) + self.actor.alpha * next_entropies_t
+        target_q = re_t + ( 1 - terminal_t ) * self.gamma * torch.squeeze(next_q)
+
+        # Get current Q estimates
+        curr_q1, curr_q2 = self.critic.forward(obs_t, ac_t)
+        curr_q1 = torch.squeeze(curr_q1)
+        curr_q2 = torch.squeeze(curr_q2)
+
+        # Calculate critic loss 
+        curr_q1_loss = self.critic.loss(curr_q1, target_q)
+        curr_q2_loss = self.critic.loss(curr_q2, target_q)
+        critic_loss = curr_q1_loss + curr_q2_loss
         
-        next_ac_na, next_ac_log_p = self.actor.forward(next_obs_t, sample = True)
-        next_q1, next_q2 = self.critic_target.forward(next_obs_t, next_ac_na)
-        next_s = torch.min(next_q1, next_q2) - self.actor.alpha.detach() * next_ac_log_p
-        target_q = (re_t + (self.gamma * (1-terminal_t) * next_s)).detach()
-
-        q1_curr, q2_curr = self.critic.forward(obs_t, ac_t)
-        q1_loss, q2_loss = self.critic.loss(q1_curr, target_q), self.critic.loss(q2_curr, target_q)
-        critic_loss = q1_loss + q2_loss
-
+        # Optimize the critic 
         self.critic.optimizer.zero_grad()
         critic_loss.backward()
         self.critic.optimizer.step()
-
         return critic_loss.item()
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
@@ -89,11 +99,33 @@ class SACAgent(BaseAgent):
         #     update the actor
 
         # 4. gather losses for logging
+
+        # Grab everything as a tensor
+        obs_t = ptu.from_numpy(ob_no)
+        ac_t = ptu.from_numpy(ac_na)
+        next_obs_t = ptu.from_numpy(next_ob_no)
+        re_t = ptu.from_numpy(re_n)
+        terminal_t = ptu.from_numpy(terminal_n)
+
+
+        for i in range(self.agent_params['num_critic_updates_per_agent_update']): 
+            print(f'Update #{i}')
+            critic_loss = self.update_critic(ob_no, ac_na, next_ob_no, re_n, terminal_n)
+            print(f'Update #{i} -- DONE!')
+
+        soft_update_params(self.critic, self.critic_target, self.critic_tau)
+
+        for j in range(self.agent_params['num_actor_updates_per_agent_update']): 
+            actor_loss, alpha_loss, alpha = self.actor.update(ob_no, self.critic)
+
+        qval1, qval2 = self.critic(obs_t, ac_t)
+        q = torch.min(qval1, qval2)
+
         loss = OrderedDict()
-        loss['Critic_Loss'] = TODO
-        loss['Actor_Loss'] = TODO
-        loss['Alpha_Loss'] = TODO
-        loss['Temperature'] = TODO
+        loss['Critic_Loss'] = critic_loss
+        loss['Actor_Loss'] = actor_loss
+        loss['Alpha_Loss'] = alpha_loss
+        loss['Temperature'] = q.mean().item()
 
         return loss
 
