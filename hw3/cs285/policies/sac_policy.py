@@ -56,18 +56,17 @@ class MLPPolicySAC(MLPPolicy):
 
         if sample: 
             actions = action_dist.rsample().detach()
-            actions = torch.tanh(actions)
+            # actions = torch.tanh(actions)
 
         else: 
             actions = action_dist.mean.detach()
 
-
         # Calculate entropies
         log_probs = action_dist.log_prob(actions)
-        # log_probs = action_dist.log_prob(actions) - torch.log(1 - actions.pow(2) + self.eps)
         entropies = -log_probs.sum(dim = 1, keepdim = True)
 
-        return actions, entropies
+
+        return actions
 
     def forward(self, observation: torch.FloatTensor):
         # TODO: Implement pass through network, computing logprobs and apply correction for Tanh squashing
@@ -75,12 +74,11 @@ class MLPPolicySAC(MLPPolicy):
         # You will need to clip log values
         # You will need SquashedNormal from sac_utils file 
 
-
         # Get mean
         means = self.mean_net(observation)
 
         # Get stds
-        log_stds = self.logstd.tanh()
+        log_stds = self.logstd
 
         # Clip values
         log_std_lb = self.log_std_bounds[0]
@@ -99,8 +97,17 @@ class MLPPolicySAC(MLPPolicy):
         # TODO Update actor network and entropy regularizer
         # return losses and alpha value
 
+        obs_t = ptu.from_numpy(obs)
+
+        # Get action
+        action = self.get_action(obs, sample = True)
+
+        # Calculate entropy
+        action_dist = self.forward(obs_t)
+        log_probs = action_dist.log_prob(action)
+        entropy = -log_probs.sum(dim = 1, keepdim = True)
+
         # Calculate clipped double Q
-        action, entropy = self.get_action(obs, sample = True)
         q1, q2 = critic.forward(ptu.from_numpy(obs), action)
         q = torch.min(q1, q2)
 
@@ -108,7 +115,8 @@ class MLPPolicySAC(MLPPolicy):
         actor_loss = torch.mean( -q - self.alpha * entropy )
 
         # Calculate alpha loss 
-        alpha_loss = -torch.mean(self.log_alpha * (self.target_entropy - entropy).detach())
+        ####### checkthis size is right
+        alpha_loss = -torch.mean(self.log_alpha * (self.target_entropy + entropy).detach())
 
         # Actor -- backward
         self.optimizer.zero_grad()
@@ -121,4 +129,4 @@ class MLPPolicySAC(MLPPolicy):
         self.log_alpha_optimizer.step()
 
 
-        return actor_loss, alpha_loss, self.alpha
+        return actor_loss.item(), alpha_loss.item(), self.alpha

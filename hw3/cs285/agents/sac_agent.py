@@ -61,13 +61,18 @@ class SACAgent(BaseAgent):
         re_t = ptu.from_numpy(re_n)
         terminal_t = ptu.from_numpy(terminal_n)
 
-        print('shape of incoming next_ob_no', next_ob_no.shape)
+        # Get next action 
+        next_actions_t = self.actor.get_action(next_ob_no)
 
+        # Get next step entropy 
+        next_actions_dist = self.actor.forward(next_obs_t)
+        next_log_probs = next_actions_dist.log_prob(next_actions_t)
+        next_entropies_t = -next_log_probs.sum(dim = 1, keepdim = True)
+        
         # Calculate Target Q
-        next_actions_t, next_entropies_t = self.actor.get_action(next_ob_no)
-        next_q1, next_q2 = self.critic_target(next_obs_t, next_actions_t)
-        next_q = torch.min(next_q1, next_q2) + self.actor.alpha * next_entropies_t
-        target_q = re_t + ( 1 - terminal_t ) * self.gamma * torch.squeeze(next_q)
+        next_q1, next_q2 = self.critic_target(ptu.from_numpy(ob_no), next_actions_t)
+        min_q = torch.min(next_q1, next_q2)
+        target_q = re_t + self.gamma * (1-terminal_t) * torch.squeeze((min_q + self.actor.alpha * next_entropies_t))
 
         # Get current Q estimates
         curr_q1, curr_q2 = self.critic.forward(obs_t, ac_t)
@@ -106,19 +111,18 @@ class SACAgent(BaseAgent):
         next_obs_t = ptu.from_numpy(next_ob_no)
         re_t = ptu.from_numpy(re_n)
         terminal_t = ptu.from_numpy(terminal_n)
-
+        
 
         for i in range(self.agent_params['num_critic_updates_per_agent_update']): 
-            print(f'Update #{i}')
             critic_loss = self.update_critic(ob_no, ac_na, next_ob_no, re_n, terminal_n)
-            print(f'Update #{i} -- DONE!')
 
         soft_update_params(self.critic, self.critic_target, self.critic_tau)
 
+        ## still need a line for if we actually need to update date not sure which params
         for j in range(self.agent_params['num_actor_updates_per_agent_update']): 
             actor_loss, alpha_loss, alpha = self.actor.update(ob_no, self.critic)
 
-        qval1, qval2 = self.critic(obs_t, ac_t)
+        qval1, qval2 = self.critic.forward(obs_t, ac_t)
         q = torch.min(qval1, qval2)
 
         loss = OrderedDict()

@@ -258,7 +258,6 @@ class RL_Trainer(object):
 
                     action = self.agent.actor.get_action(obs)[0]
                     next_obs, rew, done, _ = self.env.step(action)
-
                     episode_return += rew
 
                     episode_step += 1
@@ -270,6 +269,9 @@ class RL_Trainer(object):
                         terminal = 0
                     paths = [Path([obs], [], [action], [rew], [next_obs], [terminal])]
                     obs = next_obs
+
+                    
+
 
                 # add collected data to replay buffer
                 self.agent.add_to_replay_buffer(paths)
