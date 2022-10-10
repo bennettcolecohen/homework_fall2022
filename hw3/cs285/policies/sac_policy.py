@@ -116,14 +116,18 @@ class MLPPolicySAC(MLPPolicy):
         # Get q from critic
         q_val = critic.forward(obs, action)
 
+
         # Actor Loss
-        actor_loss = (self.alpha.detach() * log_prob - q_val).mean()
+        # actor_loss = (self.alpha.detach() * log_prob - q_val).mean()
+        actor_loss = torch.mean( self.alpha * log_prob - q_val)
         self.optimizer.zero_grad()
         actor_loss.backward()
         self.optimizer.step()
 
         # Alpha Loss
-        alpha_loss = ( self.alpha * (-log_prob - self.target_entropy).detach() ).mean()
+        alpha_loss = -torch.mean(self.log_alpha * (log_prob + self.target_entropy ).detach())
+
+        # alpha_loss = ( self.alpha * (-log_prob - self.target_entropy).detach() ).mean()
         self.log_alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.log_alpha_optimizer.step()
