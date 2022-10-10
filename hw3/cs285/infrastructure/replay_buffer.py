@@ -1,5 +1,6 @@
 from cs285.infrastructure.utils import *
-
+import torch 
+import numpy as np
 
 class ReplayBuffer(object):
 
