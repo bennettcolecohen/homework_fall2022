@@ -56,25 +56,10 @@ class SACCritic(nn.Module, BaseCritic):
 
     def forward(self, obs: torch.Tensor, action: torch.Tensor):
         # TODO return the two q values
-        obs_action = torch.cat([obs, action], dim=1)
-        q1, q2 = self.Q1(obs_action), self.Q2(obs_action)
-        q = torch.minimum(q1, q2)
-        return q
 
-    def update(self, ob_no, ac_na, target): 
+        # Concat obs and action
+        obs_action = torch.cat([obs, action], dim = -1)
+        q_val_1 = self.Q1(obs_action)
+        q_val_2 = self.Q2(obs_action)
 
-        obs_action = torch.cat([ob_no, ac_na], dim=1)
-        q1, q2 = self.Q1(obs_action), self.Q2(obs_action)
-
-        q1_loss = self.loss(q1, target)
-        q2_loss = self.loss(q2, target)
-        loss = q1_loss + q2_loss
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        return loss.item()
-
-    
-        
+        return q_val_1, q_val_2

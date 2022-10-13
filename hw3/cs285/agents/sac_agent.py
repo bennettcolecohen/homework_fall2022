@@ -47,147 +47,74 @@ class SACAgent(BaseAgent):
         self.training_step = 0
         self.replay_buffer = ReplayBuffer(max_size=100000)
 
-    # def update_critic(self, ob_no, ac_na, next_ob_no, re_n, terminal_n):
-    #     # TODO: 
-    #     # 1. Compute the target Q value. 
-    #     # HINT: You need to use the entropy term (alpha)
-    #     # 2. Get current Q estimates and calculate critic loss
-    #     # 3. Optimize the critic  
+    def update_critic(self, ob_no, ac_na, next_ob_no, re_n, terminal_n):
 
-    #     # Grab everything as a tensor
-    #     obs_t = ptu.from_numpy(ob_no)
-    #     ac_t = ptu.from_numpy(ac_na)
-    #     next_obs_t = ptu.from_numpy(next_ob_no)
-    #     re_t = ptu.from_numpy(re_n)
-    #     terminal_t = ptu.from_numpy(terminal_n)
-
-    #     # Get next action 
-    #     next_actions_t = self.actor.get_action(next_ob_no)
-
-    #     # Get next step log probs 
-    #     next_actions_dist = self.actor.forward(next_obs_t)
-    #     next_log_probs = next_actions_dist.log_prob(next_actions_t)
-    #     next_sum_log_probs = next_log_probs.sum(dim = 1, keepdim = True)
-        
-    #     # Calculate Target Q
-    #     next_q1, next_q2 = self.critic_target(next_obs_t, next_actions_t)
-    #     min_q = torch.min(next_q1, next_q2)
-    #     target_q = torch.unsqueeze(re_t + self.gamma, dim = -1) * (min_q - self.actor.alpha * next_sum_log_probs)
-    #     target_q = torch.squeeze(target_q)
-
-    #     # Get current Q estimates
-    #     curr_q1, curr_q2 = self.critic.forward(obs_t, ac_t)
-    #     curr_q1 = torch.squeeze(curr_q1)
-    #     curr_q2 = torch.squeeze(curr_q2)
-
-    #     # Calculate critic loss 
-    #     curr_q1_loss = self.critic.loss(curr_q1, target_q)
-    #     curr_q2_loss = self.critic.loss(curr_q2, target_q)
-    #     critic_loss = curr_q1_loss + curr_q2_loss
-        
-    #     # Optimize the critic 
-    #     self.critic.optimizer.zero_grad()
-    #     critic_loss.backward()
-    #     self.critic.optimizer.step()
-    #     return critic_loss.item()
-
-    # def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
-    #     # TODO 
-    #     # for agent_params['num_critic_updates_per_agent_update'] steps,
-    #     #     update the critic
-
-    #     # 2. Softly update the target every critic_target_update_frequency (HINT: look at sac_utils)
-
-    #     # If you need to update actor
-    #     # for agent_params['num_actor_updates_per_agent_update'] steps,
-    #     #     update the actor
-    #     # 4. gather losses for logging
-
-    #     # Grab everything as a tensor
-    #     obs_t = ptu.from_numpy(ob_no)
-    #     ac_t = ptu.from_numpy(ac_na)
-    #     next_obs_t = ptu.from_numpy(next_ob_no)
-    #     re_t = ptu.from_numpy(re_n)
-    #     terminal_t = ptu.from_numpy(terminal_n)
-
-    #     for i in range(self.agent_params['num_critic_updates_per_agent_update']): 
-    #         critic_loss = self.update_critic(ob_no, ac_na, next_ob_no, re_n, terminal_n)
-
-    #     soft_update_params(self.critic, self.critic_target, self.critic_tau)
-
-    #     ## still need a line for if we actually need to update not sure which params
-    #     for j in range(self.agent_params['num_actor_updates_per_agent_update']): 
-    #         actor_loss, alpha_loss, alpha = self.actor.update(ob_no, self.critic)
-
-    #     qval1, qval2 = self.critic.forward(obs_t, ac_t)
-    #     q = torch.min(qval1, qval2)
-
-    #     loss = OrderedDict()
-    #     loss['Critic_Loss'] = critic_loss
-    #     loss['Actor_Loss'] = actor_loss
-    #     loss['Alpha_Loss'] = alpha_loss
-    #     loss['Temperature'] = q.mean().item()
-
-    #     return loss
-
-    def update_critic(self, ob_no, ac_na, next_ob_no, re_n, terminal_n): 
-
-        # Get things as tensors 
+        # Convert to tensors 
         ob_no = ptu.from_numpy(ob_no)
-        ac_na = ptu.from_numpy(ac_na).to(torch.long)
+        ac_na = ptu.from_numpy(ac_na)
         next_ob_no = ptu.from_numpy(next_ob_no)
-        re_n = ptu.from_numpy(re_n)
-        terminal_n = ptu.from_numpy(terminal_n)
+        re_n = ptu.from_numpy(re_n).unsqueeze(1)
+        terminal_n = ptu.from_numpy(terminal_n).unsqueeze(1)
 
-        # Get Next Action
-        next_action_dist = self.actor(next_ob_no)
-        next_action = next_action_dist.sample()
+        with torch.no_grad(): 
 
-        # Get next q
-        next_q = self.critic_target(next_ob_no, next_action)
+            # Get next action
+            next_action, next_log_probs = self.actor.get_action(ptu.to_numpy(next_ob_no), sample = True)
 
-        # Get entropy 
-        next_log_probs = next_action_dist.log_prob(next_action)
+            if isinstance(next_action, np.ndarray):
+                next_action = ptu.from_numpy(next_action)
 
-        # Compute target 
-        target_q = re_n + self.gamma * (1 - terminal_n) * (next_q - self.actor.alpha * next_log_probs)
+            # Compute targets 
+            next_q1, next_q2 = self.critic_target(next_ob_no, next_action)
+            next_q = torch.minimum( next_q1, next_q2 )
 
-        # Call Update method from sac critic
-        critic_loss = self.critic.update(ob_no, ac_na, target_q)
+            # Calculate target 
+            target = re_n + self.gamma * (1 - terminal_n) * (next_q - self.actor.alpha * next_log_probs)
+
+        # Get current q estimates 
+        q1, q2 = self.critic(ob_no, ac_na)
+        
+        # Calculate loss for q1,q2
+        q1_loss = self.critic.loss(q1, target)
+        q2_loss = self.critic.loss(q2, target)
+        critic_loss = q1_loss + q2_loss
+
+        # Update Critic 
+        self.critic.optimizer.zero_grad()
+        critic_loss.backward()
+        self.critic.optimizer.step()
+
 
         return critic_loss
 
-    def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n): 
-        
-        # ob_no = ptu.from_numpy(ob_no),
-        # ac_na = ptu.from_numpy(ac_na),
-        # re_n = ptu.from_numpy(re_n),
-        # next_ob_no = ptu.from_numpy(next_ob_no),
-        # terminal_n = ptu.from_numpy(terminal_n)
-      
-        # Update critic
-        for i in range(self.agent_params['num_critic_updates_per_agent_update']): 
+    def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
+
+        # Update Critic 
+        num_critic_updates = self.agent_params['num_critic_updates_per_agent_update']
+        for _ in range(num_critic_updates): 
             critic_loss = self.update_critic(ob_no, ac_na, next_ob_no, re_n, terminal_n)
 
-        # Update Target Critic per schedule
-        if self.training_step % self.critic_target_update_frequency == 0: 
-            soft_update_params( self.critic.Q1, self.critic_target.Q1, self.critic_tau)
+        if self.training_step % self.critic_target_update_frequency == 0:
+            soft_update_params(self.critic, self.critic_target, self.critic_tau)
 
-            soft_update_params( self.critic.Q2, self.critic_target.Q2, self.critic_tau)
 
-        # Update Actor
-        if self.training_step % self.actor_update_frequency == 0:
-            for _ in range(self.agent_params['num_actor_updates_per_agent_update']):
+        # Update Actor 
+        num_actor_updates = self.agent_params['num_actor_updates_per_agent_update']
+        if self.training_step % self.actor_update_frequency == 0: 
+            for _ in range(num_actor_updates): 
                 actor_loss, alpha_loss, temperature = self.actor.update(ob_no, self.critic)
 
+
+
+        # Gather Losses for logging
         loss = OrderedDict()
         loss['Critic_Loss'] = critic_loss
         loss['Actor_Loss'] = actor_loss
         loss['Alpha_Loss'] = alpha_loss
         loss['Temperature'] = temperature
 
+
         return loss
-        
 
     def add_to_replay_buffer(self, paths):
         self.replay_buffer.add_rollouts(paths)
