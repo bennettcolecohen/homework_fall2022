@@ -56,26 +56,25 @@ class SACAgent(BaseAgent):
         re_n = ptu.from_numpy(re_n).unsqueeze(1)
         terminal_n = ptu.from_numpy(terminal_n).unsqueeze(1)
 
-        with torch.no_grad(): 
-
+        with torch.no_grad():
             # Get next action
-            next_action, next_log_probs = self.actor.get_action(ptu.to_numpy(next_ob_no), sample = True)
-
-            if isinstance(next_action, np.ndarray):
-                next_action = ptu.from_numpy(next_action)
+            next_action, next_log_probs = self.actor.get_action(ptu.to_numpy(next_ob_no))
+            next_action = ptu.from_numpy(next_action)
 
             # Compute targets 
             next_q1, next_q2 = self.critic_target(next_ob_no, next_action)
-            next_q = torch.minimum( next_q1, next_q2 )
+            next_q = torch.min(next_q1, next_q2).view(-1)
 
             # Calculate target 
             target = re_n + self.gamma * (1 - terminal_n) * (next_q - self.actor.alpha * next_log_probs)
+            target = target.detach()
 
         # Get current q estimates 
         q1, q2 = self.critic(ob_no, ac_na)
+
         
-        # Calculate loss for q1,q2
-        q1_loss = self.critic.loss(q1, target)
+        # Calculate loss for q1,q2 (MSE)
+        q1_loss = self.critic.loss(q1, target) 
         q2_loss = self.critic.loss(q2, target)
         critic_loss = q1_loss + q2_loss
 
@@ -88,6 +87,19 @@ class SACAgent(BaseAgent):
         return critic_loss
 
     def train(self, ob_no, ac_na, re_n, next_ob_no, terminal_n):
+
+        # TODO 
+        # 1. Implement the following pseudocode:
+        # for agent_params['num_critic_updates_per_agent_update'] steps,
+        #     update the critic
+        # 2. Softly update the target every critic_target_update_frequency (HINT: look at sac_utils)
+        # 3. Implement following pseudocode:
+        # If you need to update actor
+        # for agent_params['num_actor_updates_per_agent_update'] steps,
+        #     update the actor
+
+
+        self.training_step += 1
 
         # Update Critic 
         num_critic_updates = self.agent_params['num_critic_updates_per_agent_update']
@@ -112,6 +124,8 @@ class SACAgent(BaseAgent):
         loss['Actor_Loss'] = actor_loss
         loss['Alpha_Loss'] = alpha_loss
         loss['Temperature'] = temperature
+
+        
 
 
         return loss

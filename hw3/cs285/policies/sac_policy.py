@@ -41,26 +41,27 @@ class MLPPolicySAC(MLPPolicy):
 
     def forward(self, observation):
 
-        if not isinstance(observation, torch.Tensor): 
-            observation = ptu.from_numpy(observation)
-
         if self.discrete: 
             logits = self.logits_na(observation)
-            action_dist = torch.distributions.Categorical(logits)
+            action_dist = torch.distributions.Categorical(logits = logits)
             return action_dist
         else: 
 
             # Get mean 
             batch_means = self.mean_net(observation)
 
-            # Get clipped std 
+            # Get std 
             log_std = self.logstd
-            min_log_std, max_log_std = self.log_std_bounds 
-            clipped_log_std = log_std.clamp(min = min_log_std, max = max_log_std)
+
+            # Clip std useing log_std_bounds
+            min_std, max_std = self.log_std_bounds 
+            clipped_log_std = torch.clamp(log_std, min = min_std, max = max_std)
             clipped_log_std = torch.exp(clipped_log_std)
 
             # Create squashed normal
-            action_dist = sac_utils.SquashedNormal(batch_means, clipped_log_std)
+            action_dist = sac_utils.SquashedNormal(
+                loc = batch_means, 
+                scale = clipped_log_std)
 
             return action_dist
         
@@ -78,30 +79,22 @@ class MLPPolicySAC(MLPPolicy):
         # Run policy
         action_dist = self(obs)
 
-        # Grab min/max action
-        min_ac, max_ac = self.action_range
-
         # Get action
         if sample: 
-
             # Sample action from action_dist
-            action = action_dist.rsample() # or maybe just sample
-
-            # Use action ranges to clip
-            action = torch.clip(action, min = min_ac, max = max_ac)
-
-            # Get the log probs  
-            log_probs = action_dist.log_prob(action)
-            log_probs = log_probs.sum(dim = 1, keepdim = True)
-
+            action = action_dist.rsample() 
         else: 
-            # Nnsquash/clip mean action
+            # Use mean
             action = action_dist.mean
-            action = torch.clip(action, min = min_ac, max = max_ac)
-            
-            # Get the log probs  
-            log_probs = action_dist.log_prob(action)
-            log_probs = log_probs.sum(dim = 1, keepdim = True)
+
+        # Use action ranges to clip action
+        min_ac, max_ac = self.action_range
+        action = torch.clip(action, min = min_ac, max = max_ac)
+
+        # Calculate log probs
+        log_probs = action_dist.log_prob(action)
+        log_probs = log_probs.sum(dim = -1, keepdim = True)
+        log_probs = log_probs.view(-1)
 
         # Convert back to np
         action = ptu.to_numpy(action)
@@ -111,7 +104,7 @@ class MLPPolicySAC(MLPPolicy):
 
     def update(self, obs, critic):  
 
-
+        # Convert obs to tensor
         obs = ptu.from_numpy(obs)
 
         # Get the action and log probs
@@ -121,18 +114,17 @@ class MLPPolicySAC(MLPPolicy):
         action_t = ptu.from_numpy(action)
         
         # Calculate qvals
-        
         q1, q2 = critic(obs, action_t)
-        q = torch.minimum(q1,q2)
+        q = torch.min(q1,q2).view(-1)
 
         # Actor Loss 
-        actor_loss = (self.alpha.detach() * log_probs - q).mean()
+        actor_loss = torch.mean(self.alpha * log_probs - q)
         self.optimizer.zero_grad()
         actor_loss.backward()
         self.optimizer.step()
 
         # Alpha Loss 
-        alpha_loss = (- self.alpha * (log_probs.detach() + self.target_entropy)).mean()
+        alpha_loss = -(self.alpha * (log_probs + self.target_entropy).detach()).mean()
         self.log_alpha_optimizer.zero_grad()
         alpha_loss.backward()
         self.log_alpha_optimizer.step()
