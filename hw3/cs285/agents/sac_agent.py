@@ -59,11 +59,11 @@ class SACAgent(BaseAgent):
         with torch.no_grad():
             # Get next action
             next_action, next_log_probs = self.actor.get_action(ptu.to_numpy(next_ob_no))
-            next_action = ptu.from_numpy(next_action)
+            # next_action = ptu.from_numpy(next_action)
 
             # Compute targets 
             next_q1, next_q2 = self.critic_target(next_ob_no, next_action)
-            next_q = torch.min(next_q1, next_q2).view(-1)
+            next_q = torch.min(next_q1, next_q2)
 
             # Calculate target 
             target = re_n + self.gamma * (1 - terminal_n) * (next_q - self.actor.alpha * next_log_probs)

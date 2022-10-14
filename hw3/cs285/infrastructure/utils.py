@@ -1,4 +1,5 @@
 import numpy as np
+import cs285.infrastructure.pytorch_util as ptu
 import time
 import copy
 
@@ -73,7 +74,7 @@ def sample_trajectory(env, policy, max_path_length, render=False, render_mode=('
         # use the most recent ob to decide what to do
         obs.append(ob)
         ac, _ = policy.get_action(ob) # HINT: query the policy's get_action function
-
+        ac = ptu.to_numpy(ac)
         # ac = ac[0]
         acs.append(ac)
 
@@ -212,6 +213,7 @@ def eval_trajectory(env, policy, max_path_length, render=False, render_mode=('rg
                 time.sleep(env.model.opt.timestep)
         obs.append(ob)
         ac, _ = policy.get_action(ob, sample = False)
+        ac = ptu.to_numpy(ac)
         ac = ac[0]
         acs.append(ac)
         ob, rew, done, _ = env.step(ac)

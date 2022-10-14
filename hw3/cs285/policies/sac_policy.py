@@ -87,17 +87,22 @@ class MLPPolicySAC(MLPPolicy):
             # Use mean
             action = action_dist.mean
 
-        # Use action ranges to clip action
+        # Use action ranges to unclip action
         min_ac, max_ac = self.action_range
+        ac_width = (max_ac - min_ac) / 2
+        ac_offset = (max_ac + min_ac) / 2
+
+        # action = action * ac_width + ac_offset
         action = torch.clip(action, min = min_ac, max = max_ac)
+
 
         # Calculate log probs
         log_probs = action_dist.log_prob(action)
         log_probs = log_probs.sum(dim = -1, keepdim = True)
-        log_probs = log_probs.view(-1)
+        log_probs = log_probs
 
         # Convert back to np
-        action = ptu.to_numpy(action)
+        # action = ptu.to_numpy(action)
 
 
         return action, log_probs
@@ -111,11 +116,11 @@ class MLPPolicySAC(MLPPolicy):
         action, log_probs = self.get_action(obs, sample = True)
         
         # Convert action to numpy
-        action_t = ptu.from_numpy(action)
+        # action_t = ptu.from_numpy(action)
         
         # Calculate qvals
-        q1, q2 = critic(obs, action_t)
-        q = torch.min(q1,q2).view(-1)
+        q1, q2 = critic(obs, action)
+        q = torch.min(q1,q2)
 
         # Actor Loss 
         actor_loss = torch.mean(self.alpha * log_probs - q)

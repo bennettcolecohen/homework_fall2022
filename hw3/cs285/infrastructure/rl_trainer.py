@@ -288,6 +288,8 @@ class RL_Trainer(object):
                     episode_return = 0
 
                 action, _ = self.agent.actor.get_action(obs)
+
+                action = ptu.to_numpy(action)
                 action = action[0]
                 next_obs, rew, done, _ = self.env.step(action)
 
