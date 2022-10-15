@@ -113,8 +113,10 @@ class SACAgent(BaseAgent):
         # Update Actor 
         num_actor_updates = self.agent_params['num_actor_updates_per_agent_update']
         if self.training_step % self.actor_update_frequency == 0: 
-            for _ in range(num_actor_updates): 
+            for _ in range(num_actor_updates):
                 actor_loss, alpha_loss, temperature = self.actor.update(ob_no, self.critic)
+        else: 
+            actor_loss, alpha_loss, temperature = 0,0,0
 
 
 
