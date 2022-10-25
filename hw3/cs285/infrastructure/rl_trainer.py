@@ -52,10 +52,14 @@ class RL_Trainer(object):
         # Make the gym environment
         register_custom_envs()
         if self.params['agent_class'] is SACAgent:
+<<<<<<< HEAD
             self.env = gym.make(
                 self.params['env_name'],
                 max_episode_steps=self.params['ep_len']
             )
+=======
+            self.env = gym.make(self.params['env_name'], max_episode_steps=self.params['ep_len'])
+>>>>>>> d2227e86fb1faf02c115c30c3762f1cfc049c84e
         else:
             self.env = gym.make(self.params['env_name'])
         if self.params['video_log_freq'] > 0:
