@@ -34,6 +34,7 @@ class RL_Trainer(object):
         ## INIT
         #############
 
+
         # Get params, create logger
         self.params = params
         self.logger = Logger(self.params['logdir'])
@@ -42,20 +43,18 @@ class RL_Trainer(object):
         seed = self.params['seed']
         np.random.seed(seed)
         torch.manual_seed(seed)
-        ptu.init_gpu(
-            use_gpu=not self.params['no_gpu'],
-            gpu_id=self.params['which_gpu']
-        )
+        ptu.init_gpu(use_gpu=not self.params['no_gpu'],gpu_id=self.params['which_gpu'])
 
         #############
         ## ENV
         #############
 
         # Make the gym environment
-        if self.params['video_log_freq'] == -1:
-            self.env = gym.make(self.params['env_name'])
-        else:
-            self.env = gym.make(self.params['env_name'], render_mode='rgb_array')
+        self.env = gym.make(self.params['env_name'])
+        # if self.params['video_log_freq'] == -1:
+        #     self.env = gym.make(self.params['env_name'])
+        # else:
+        #     self.env = gym.make(self.params['env_name'], render_mode='rgb_array')
         self.env.seed(seed)
 
         # import plotting (locally if 'obstacles' env)
@@ -197,12 +196,34 @@ class RL_Trainer(object):
             train_video_paths: paths which also contain videos for visualization purposes
         """
         # TODO: get this from previous HW
+        if itr == 0:
+            if initial_expertdata:
+                paths = pickle.load(open(self.params['expert_data'], 'rb'))
+                return paths, 0, None
+            else:
+                num_transitions_to_sample = self.params['batch_size_initial']
+        else:
+            num_transitions_to_sample = self.params['batch_size']
 
+        print('\nCollecting data to be used for training...')
+        paths, envsteps_this_batch = utils.sample_trajectories(
+            self.env, collect_policy,
+            num_transitions_to_sample,
+            self.params['ep_len']
+        )
+
+        train_video_paths = None
+        
         return paths, envsteps_this_batch, train_video_paths
 
     def train_agent(self):
         # TODO: get this from previous HW
-        pass
+        all_logs = []
+        for train_step in range(self.params['num_agent_train_steps_per_iter']):
+            ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch = self.agent.sample(self.params['train_batch_size'])
+            train_log = self.agent.train(ob_batch, ac_batch, re_batch, next_ob_batch, terminal_batch)
+            all_logs.append(train_log)
+        return all_logs
 
     def train_sac_agent(self):
         # TODO: Train the SAC component of the MBPO agent.

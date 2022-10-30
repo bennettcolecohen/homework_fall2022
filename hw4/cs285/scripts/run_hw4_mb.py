@@ -1,6 +1,5 @@
 import os
 import time
-
 from cs285.infrastructure.rl_trainer import RL_Trainer
 from cs285.agents.mb_agent import MBAgent
 
@@ -100,6 +99,8 @@ def main():
         params['ep_len']=500
     if params['env_name']=='obstacles-cs285-v0':
         params['ep_len']=100
+
+    print('hi')
 
     ##################################
     ### CREATE DIRECTORY FOR LOGGING
