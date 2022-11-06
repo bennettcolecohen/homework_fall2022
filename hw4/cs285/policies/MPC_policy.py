@@ -107,8 +107,7 @@ class MPCPolicy(BasePolicy):
         mean_rewards = np.zeros((self.N,))
         for model in self.dyn_models:
             mean_rewards += self.calculate_sum_of_rewards(obs, candidate_action_sequences, model)
-        mean_rewards /= len(self.dyn_models)
-        
+        mean_rewards = mean_rewards / len(self.dyn_models)
 
         return mean_rewards
 
