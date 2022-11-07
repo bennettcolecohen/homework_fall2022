@@ -49,8 +49,15 @@ def plot_data(x, list_of_y, list_of_labels, title, xlabel, ylabel, legend, outpu
 # 'Effect of Num. of Candidate Sequences on Eval_AverageReturn', 'Iteration', 'Eval_AverageReturn', True, 'q4_numseq_plot.png')
 
 
-y_data_3 = [read_data('q4_reacher_ensemble1')[1], 
-          read_data('q4_reacher_ensemble3')[1], 
-          read_data('q4_reacher_ensemble5')[1]]
-plot_data(np.arange(15), y_data_3, ['Ensemble = 1', 'Ensemble = 3', 'Ensemble = 5'], 
-'Effect of Ensemble Size on Eval_AverageReturn', 'Iteration', 'Eval_AverageReturn', True, 'q4_ensemble_plot.png')
+# y_data_3 = [read_data('q4_reacher_ensemble1')[1], 
+#           read_data('q4_reacher_ensemble3')[1], 
+#           read_data('q4_reacher_ensemble5')[1]]
+# plot_data(np.arange(15), y_data_3, ['Ensemble = 1', 'Ensemble = 3', 'Ensemble = 5'], 
+# 'Effect of Ensemble Size on Eval_AverageReturn', 'Iteration', 'Eval_AverageReturn', True, 'q4_ensemble_plot.png')
+
+
+y_data_5 = [read_data('q5_cheetah_random')[1], 
+          read_data('q5_cheetah_cem_2')[1], 
+          read_data('q5_cheetah_cem_4')[1]]
+plot_data(np.arange(len(y_data_5[0])), y_data_5, ['Random', 'CEM_2', 'CEM_4'], 
+'CEM vs Random Shooting on Cheeteah', 'Iteration', 'Eval_AverageReturn', True, 'q5_plot.png')
