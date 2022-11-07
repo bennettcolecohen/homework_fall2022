@@ -56,8 +56,15 @@ def plot_data(x, list_of_y, list_of_labels, title, xlabel, ylabel, legend, outpu
 # 'Effect of Ensemble Size on Eval_AverageReturn', 'Iteration', 'Eval_AverageReturn', True, 'q4_ensemble_plot.png')
 
 
-y_data_5 = [read_data('q5_cheetah_random')[1], 
-          read_data('q5_cheetah_cem_2')[1], 
-          read_data('q5_cheetah_cem_4')[1]]
-plot_data(np.arange(len(y_data_5[0])), y_data_5, ['Random', 'CEM_2', 'CEM_4'], 
-'CEM vs Random Shooting on Cheeteah', 'Iteration', 'Eval_AverageReturn', True, 'q5_plot.png')
+# y_data_5 = [read_data('q5_cheetah_random')[1], 
+#           read_data('q5_cheetah_cem_2')[1], 
+#           read_data('q5_cheetah_cem_4')[1]]
+# plot_data(np.arange(len(y_data_5[0])), y_data_5, ['Random', 'CEM_2', 'CEM_4'], 
+# 'CEM vs Random Shooting on Cheeteah', 'Iteration', 'Eval_AverageReturn', True, 'q5_plot.png')
+
+
+y_data_6 = [read_data('q6_cheetah_rlen0')[1], 
+          read_data('q6_cheetah_rlen1_')[1], 
+          read_data('q6_cheetah_rlen10')[1]]
+plot_data(np.arange(len(y_data_6[0])), y_data_6, ['rlen0', 'rlen1', 'rlen10'], 
+'MBPO Rollout Length on SAC', 'Iteration', 'Eval_AverageReturn', True, 'q6_plot.png')
